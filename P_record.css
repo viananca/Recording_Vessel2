@@ -1,0 +1,50 @@
+body {
+    background-image: url('https://upload.wikimedia.org/wikipedia/commons/a/a9/Aleson_MV_Antonia.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.card {
+    width: 1400px;
+    max-width: 100%;
+    border: none;
+    height: 380px;
+    margin: auto;
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    box-sizing: border-box;
+}
+.forms-inputs{
+    position: relative
+}
+.forms-inputs span{
+    position: absolute;
+    top:-18px;left: 10px;
+    background-color: rgb(255, 255, 255);
+    padding: 5px 10px;
+    font-size: 15px
+}
+
+.forms-inputs input{
+    height: 50px;
+    width: 100%;
+    border: 2px solid #eee
+}
+
+.forms-inputs input:focus{
+    box-shadow: none;
+    outline: none;
+    border: 2px solid #000
+}
+
+.btn{
+    height: 50px
+}
