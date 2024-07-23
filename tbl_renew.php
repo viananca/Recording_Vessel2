@@ -25,34 +25,20 @@ if (isset($_POST['logout'])) {
 }
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
-$rid = isset($_GET['rid']) ? $_GET['rid'] : null;
 
 if ($id) {
     // Fetch the record based on id
-    $selectRecord = $con->prepare("SELECT * FROM tbl_passenger_record WHERE id = ?");
+    $selectRecord = $con->prepare("SELECT * FROM tbl_records WHERE id = ?");
     $selectRecord->bind_param("s", $id);
     $selectRecord->execute();
     $result = $selectRecord->get_result();
-    $passvess = $result->fetch_assoc();
-    $ExpDateLoadline = $passvess['ExpDateLoadline'];
-    $EstDateNextDD = $passvess['EstDateNextDD'];
-    $PlaceLastDD = $passvess['PlaceLastDD'];
-    $Vesselname = $passvess['Vesselname'];
+    $vessel = $result->fetch_assoc();
+    $ExpDateLoadline = $vessel['ExpDateLoadline'];
+    $EstDateNextDD = $vessel['EstDateNextDD'];
+    $PlaceLastDD = $vessel['PlaceLastDD'];
+    $Vesselname = $vessel['Vesselname'];
 }
-if ($rid) {
-    // Fetch the record based on id
-    $selectRecord = $con->prepare("SELECT * FROM tbl_cargo_record WHERE rid = ?");
-    $selectRecord->bind_param("s", $rid);
-    $selectRecord->execute();
-    $result = $selectRecord->get_result();
-    $cargovess = $result->fetch_assoc();
-    $ExpDateLoadline = $cargovess['ExpDateLoadline'];
-    $EstDateNextDD = $cargovess['EstDateNextDD'];
-    $PlaceLastDD = $cargovess['PlaceLastDD'];
-    $Vesselname = $cargovess['Vesselname'];
-    
-    $formattedExpDateLoadline = (new DateTime($ExpDateLoadline))->format('Y-m-d');
-}
+
 
  // Format dates
 ?>
@@ -137,24 +123,11 @@ if ($rid) {
                                     <!-- Table with stripped rows -->
                                         <div class="row">
                                             <div class="col-md-6 border-right">
-                                                <form action="tbl_renew.php<?php
-                                                        if (isset($_GET['rid'])) {
-                                                            echo '?rid=' . htmlspecialchars($_GET['rid']);
-                                                        }
-                                                        if (isset($_GET['id'])) {
-                                                            echo isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
-                                                        }
-                                                    ?>" method="POST">
+                                                <form action="tbl_renew.php?id=<?php echo $vessel['id']; ?>" method="POST">
                                                      <?php
                                                         if (isset($_POST['btnextend'])) {
                                                             // Check if 'btnextend' is clicked and handle update based on parameters
-                                                            if (isset($_GET['rid'])) {
-                                                                $rid = $_GET['rid'];
-                                                                $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
-
-                                                                // Perform the database update query for tbl_cargo_record
-                                                                $update_query = "UPDATE tbl_cargo_record SET EstDateNextDD='$EstDateNextDD' WHERE rid ='$rid'";
-                                                            } elseif (isset($_GET['id'])) {
+                                                            if (isset($_GET['id'])) {
                                                                 $id = $_GET['id'];
                                                                 $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
 

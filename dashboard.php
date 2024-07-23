@@ -131,13 +131,8 @@ if (isset($_POST['logout'])) {
 
                                                         // Combined query using UNION with consistent column count and aliases
                                                         $selectAll = $con->query("
-                                                            SELECT cr.rid AS id, cr.VesselCode, cr.Vesselname, cr.DateDD, cr.DateInWaterDD, cr.PlaceLastDD, cr.Remarks, 'cargo' AS type 
-                                                            FROM tbl_cargo_record cr
-                                                            INNER JOIN cargo_list cl ON cr.rid = cl.rid
-                                                            WHERE cr.DateInWaterDD = '0000-00-00' AND cl.DateInWaterDD = '0000-00-00'
-                                                            UNION
                                                             SELECT pr.id AS id, pr.VesselCode, pr.Vesselname, pr.DateDD, pr.DateInWaterDD, pr.PlaceLastDD, pr.Remarks, 'passenger' AS type 
-                                                            FROM tbl_passenger_record pr
+                                                            FROM tbl_records pr
                                                             INNER JOIN passenger_list pl ON pr.id = pl.id
                                                             WHERE pr.DateInWaterDD = '0000-00-00' AND pl.DateInWaterDD = '0000-00-00'
                                                         ");

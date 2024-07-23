@@ -194,40 +194,40 @@ if (isset($_POST['inputpass'])) {
                                         <!-- Add more rows as needed -->
                                         <?php
                                         $i = 1;
-                                        $selectAll = $con->query("SELECT * FROM tbl_passenger_record");
-                                            while ($passvess = $selectAll->fetch_assoc()) :
-                                                $formattedDate = (new DateTime($passvess['ExpDateLoadline']))->format('F d, Y');
+                                        $selectAll = $con->query("SELECT * FROM tbl_records WHERE type = 'p'");
+                                            while ($vessel = $selectAll->fetch_assoc()) :
+                                                $formattedDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
                                             ?>
                                         <tr>
                                             <th scope="row"><?php echo $i++; ?></th>
-                                            <td><?php echo $passvess['VesselCode']; ?></td>
-                                            <td><?php echo $passvess['Vesselname']; ?></td>
+                                            <td><?php echo $vessel['VesselCode']; ?></td>
+                                            <td><?php echo $vessel['Vesselname']; ?></td>
                                             <td><?php echo $formattedDate; ?></td>
-                                            <td><?php echo $passvess['PlaceLastDD']; ?></td>
-                                            <td><?php echo $passvess['Remarks']; ?></td>
+                                            <td><?php echo $vessel['PlaceLastDD']; ?></td>
+                                            <td><?php echo $vessel['Remarks']; ?></td>
                                             <td>
-                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal"  data-target="#editModal-<?php echo $passvess['id']; ?>">
+                                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal"  data-target="#editModal-<?php echo $vessel['id']; ?>">
                                                 View
                                             </button>
-                                            <a href="P_record.php?id=<?php echo $passvess['id']; ?>">
+                                            <a href="P_record.php?id=<?php echo $vessel['id']; ?>">
                                                 <button type="button" class="btn btn-primary btn-sm" >
                                                     Manage
                                                 </button>
                                             </a>
                                             </td>
                                         </tr>
-                                        <div class="modal fade" id="editModal-<?php echo $passvess['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel-<?php echo $passvess['id']; ?>" aria-hidden="true">
+                                        <div class="modal fade" id="editModal-<?php echo $vessel['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel-<?php echo $vessel['id']; ?>" aria-hidden="true">
                                             <div class="modal-dialog modal-xl" role="document">
                                             <div class="modal-content">
                                                 <div class="modal-header">
-                                                <h5 class="modal-title" id="editModalLabel-<?php echo $passvess['id']; ?>">Review Information</h5>
+                                                <h5 class="modal-title" id="editModalLabel-<?php echo $vessel['id']; ?>">Review Information</h5>
                                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                     <span aria-hidden="true">&times;</span>
                                                 </button>
                                                 </div>
                                                 <div class="modal-body">
                                                 <!-- Add your form fields and content here -->
-                                                <form action="question_list.php?title_id=<?php //echo $passvess['id']; ?>" method="post">
+                                                <form action="question_list.php?title_id=<?php //echo $vessel['id']; ?>" method="post">
                                                     <?php
 
                                                     ?>
@@ -235,45 +235,45 @@ if (isset($_POST['inputpass'])) {
                                                         <div class="col-md-6 border-right">
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Vessel Code</label>
-                                                                <input type="text" name="VesselCode" class="form-control form-control-sm" value="<?php echo $passvess['VesselCode']; ?>" disabled>
+                                                                <input type="text" name="VesselCode" class="form-control form-control-sm" value="<?php echo $vessel['VesselCode']; ?>" disabled>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Date of DryDock</label>
-                                                                <input type="date" name="DateDD" class="form-control form-control-sm" value="<?php echo $passvess['DateDD'] ? $passvess['DateDD']: ''; ?>" disabled>
+                                                                <input type="date" name="DateDD" class="form-control form-control-sm" value="<?php echo $vessel['DateDD'] ? $vessel['DateDD']: ''; ?>" disabled>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Expiration Date of Loadline</label>
-                                                                <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" value="<?php echo $passvess['ExpDateLoadline'] ? $passvess['ExpDateLoadline']: ''; ?>" disabled>
+                                                                <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" value="<?php echo $vessel['ExpDateLoadline'] ? $vessel['ExpDateLoadline']: ''; ?>" disabled>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Estimated Date of Next DryDock</label>
-                                                                <input type="date" name="EstDateNextDD" class="form-control form-control-sm" value="<?php echo $passvess['EstDateNextDD'] ? $passvess['EstDateNextDD']: ''; ?>" disabled>
+                                                                <input type="date" name="EstDateNextDD" class="form-control form-control-sm" value="<?php echo $vessel['EstDateNextDD'] ? $vessel['EstDateNextDD']: ''; ?>" disabled>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Vessel Name</label>
-                                                                <input type="text" name="Vesselname" class="form-control form-control-sm" value="<?php echo $passvess['Vesselname']; ?>" disabled>
+                                                                <input type="text" name="Vesselname" class="form-control form-control-sm" value="<?php echo $vessel['Vesselname']; ?>" disabled>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="" class="control-label">Date of In-Water DryDock</label>
-                                                                <input type="date" name="DateInWaterDD" class="form-control form-control-sm" value="<?php echo $passvess['DateInWaterDD'] ? $passvess['DateInWaterDD']: ''; ?>" disabled>
+                                                                <input type="date" name="DateInWaterDD" class="form-control form-control-sm" value="<?php echo $vessel['DateInWaterDD'] ? $vessel['DateInWaterDD']: ''; ?>" disabled>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label class="control-label">Place of Last DryDock</label>
-                                                                <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" disabled><?php echo $passvess['PlaceLastDD']; ?></textarea>
+                                                                <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" disabled><?php echo $vessel['PlaceLastDD']; ?></textarea>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="remarks" class="control-label">Remarks</label>
                                                                 <select class="form-control form-control-sm" id="Remarks" name="Remarks" disabled>
                                                                     <option value="" disabled selected>Select Options</option>
-                                                                    <option value="Currently at Sangali" <?php echo ($passvess['Remarks'] == 'Currently at Sangali') ? 'selected' : ''; ?>>Currently at Sangali</option>
-                                                                    <option value="On Voyage" <?php echo ($passvess['Remarks'] == 'On Voyage') ? 'selected' : ''; ?>>On Voyage</option>
-                                                                    <option value="Waiting for the requirements" <?php echo ($passvess['Remarks'] == 'Waiting for the requirements') ? 'selected' : ''; ?>>Waiting for the requirements</option>
-                                                                    <option value="Annual DryDock" <?php echo ($passvess['Remarks'] == 'Annual DryDock') ? 'selected' : ''; ?>>Annual DryDock</option>
-                                                                    <option value="Last Extension" <?php echo ($passvess['Remarks'] == 'Last Extension') ? 'selected' : ''; ?>>Last Extension</option>
-                                                                    <option value="On Drydock" <?php echo ($passvess['Remarks'] == 'On Drydock') ? 'selected' : ''; ?>>On Dry dock</option>
-                                                                    <option value="No Operation" <?php echo ($passvess['Remarks'] == 'No Operation') ? 'selected' : ''; ?>>No Operation</option>
+                                                                    <option value="Currently at Sangali" <?php echo ($vessel['Remarks'] == 'Currently at Sangali') ? 'selected' : ''; ?>>Currently at Sangali</option>
+                                                                    <option value="On Voyage" <?php echo ($vessel['Remarks'] == 'On Voyage') ? 'selected' : ''; ?>>On Voyage</option>
+                                                                    <option value="Waiting for the requirements" <?php echo ($vessel['Remarks'] == 'Waiting for the requirements') ? 'selected' : ''; ?>>Waiting for the requirements</option>
+                                                                    <option value="Annual DryDock" <?php echo ($vessel['Remarks'] == 'Annual DryDock') ? 'selected' : ''; ?>>Annual DryDock</option>
+                                                                    <option value="Last Extension" <?php echo ($vessel['Remarks'] == 'Last Extension') ? 'selected' : ''; ?>>Last Extension</option>
+                                                                    <option value="On Drydock" <?php echo ($vessel['Remarks'] == 'On Drydock') ? 'selected' : ''; ?>>On Dry dock</option>
+                                                                    <option value="No Operation" <?php echo ($vessel['Remarks'] == 'No Operation') ? 'selected' : ''; ?>>No Operation</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -355,7 +355,7 @@ if (isset($_POST['inputpass'])) {
             </div>
             <div class="modal-body">
                 <!-- Form content goes here -->
-                <form action="PassVessTable.php" method="POST">
+                <form action="vesselTable.php" method="POST">
                     <div class="row">
                         <div class="col-md-6 border-right">
                             <div class="form-group">

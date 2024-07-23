@@ -28,11 +28,11 @@ $id = isset($_GET['id']) ? $_GET['id'] : null;
 
 if ($id) {
     // Fetch the record based on id
-    $selectRecord = $con->prepare("SELECT * FROM tbl_passenger_record WHERE id = ?");
+    $selectRecord = $con->prepare("SELECT * FROM tbl_records WHERE id = ?");
     $selectRecord->bind_param("s", $id);
     $selectRecord->execute();
     $result = $selectRecord->get_result();
-    $passvess = $result->fetch_assoc();
+    $vessel = $result->fetch_assoc();
 }
 ?>
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ if ($id) {
 
         <div class="card position-relative">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary"><b><?php  echo $passvess['Vesselname']; ?>  - </b><?php  echo $passvess['VesselCode']; ?></h6>
+                <h6 class="m-0 font-weight-bold text-primary"><b><?php  echo $vessel['Vesselname']; ?>  - </b><?php  echo $vessel['VesselCode']; ?></h6>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -138,22 +138,22 @@ if ($id) {
                             <!-- Add more rows as needed -->
                             <?php
                             $i = 1;
-                            if ($passvess) {
-                                $formattedDD = (new DateTime($passvess['DateDD']))->format('F d, Y');
-                                $formattedDateInWater = (new DateTime($passvess['DateInWaterDD']))->format('F d, Y');
-                                $formattedExpDate = (new DateTime($passvess['ExpDateLoadline']))->format('F d, Y');
-                                $formattedEstDate = (new DateTime($passvess['EstDateNextDD']))->format('F d, Y');
+                            if ($vessel) {
+                                $formattedDD = (new DateTime($vessel['DateDD']))->format('F d, Y');
+                                $formattedDateInWater = (new DateTime($vessel['DateInWaterDD']))->format('F d, Y');
+                                $formattedExpDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
+                                $formattedEstDate = (new DateTime($vessel['EstDateNextDD']))->format('F d, Y');
                                 ?>
                             <tr>
                                 <th scope="row" ><?php echo $i++; ?></th>
-                                <td ><?php echo $passvess['VesselCode']; ?></td>
-                                <td ><?php echo $passvess['Vesselname']; ?></td>
+                                <td ><?php echo $vessel['VesselCode']; ?></td>
+                                <td ><?php echo $vessel['Vesselname']; ?></td>
                                 <td ><?php echo $formattedDD; ?></td>
                                 <td ><?php echo $formattedDateInWater; ?></td>
                                 <td ><?php echo $formattedExpDate; ?></td>
-                                <td ><?php echo $passvess['PlaceLastDD']; ?></td>
+                                <td ><?php echo $vessel['PlaceLastDD']; ?></td>
                                 <td ><?php echo $formattedEstDate; ?></td>
-                                <td ><?php echo $passvess['Remarks']; ?></td>
+                                <td ><?php echo $vessel['Remarks']; ?></td>
                             </tr>
                             <?php
                             } else {

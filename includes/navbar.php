@@ -4,14 +4,14 @@ $backgroundImage1 = 'https://wallpapers.com/images/hd/pure-white-1080-x-1920-bac
 
 
 $alerts = [];
-$selectPassenger = $con->query("SELECT * FROM tbl_passenger_record");
+$selectPassenger = $con->query("SELECT * FROM tbl_records");
 
-while ($passvess = $selectPassenger->fetch_assoc()) {
-    if (strpos($passvess['EstDateNextDD'], '0000') === 0) {
+while ($vessel = $selectPassenger->fetch_assoc()) {
+    if (strpos($vessel['EstDateNextDD'], '0000-00-00') === 0 || strpos($vessel['ExpDateLoadline'], '0000-00-00') === 0 ) {
         continue;
     }
-    $expDateLoadline = new DateTime($passvess['ExpDateLoadline']);
-    $estDateNextDD = new DateTime($passvess['EstDateNextDD']);
+    $expDateLoadline = new DateTime($vessel['ExpDateLoadline']);
+    $estDateNextDD = new DateTime($vessel['EstDateNextDD']);
     $currentDate = new DateTime();
 
     
@@ -37,81 +37,32 @@ while ($passvess = $selectPassenger->fetch_assoc()) {
     // Check if the difference is close to 2 years, exactly 2 years, or within those 2 years
     if (($years == 2 || $years < 2 && $closeToDD || $years < 2 || $oneYearBeforeDD ) ) {
         $message = "exceed the limit of Expiration Date";
-        $href = "tbl_renew.php?id=" . htmlspecialchars($passvess['id']);
+        $href = "tbl_renew.php?id=" . htmlspecialchars($vessel['id']);
         $iconColor = 'bg-danger'; // Red color for urgent notifications
     } elseif ($closeToDD) {
         $message = "needs to Drydock";
-        $href = "tbl_extend.php?id=" . htmlspecialchars($passvess['id']);
+        $href = "tbl_extend.php?id=" . htmlspecialchars($vessel['id']);
         $iconColor = 'bg-warning'; // Yellow color for less urgent notifications
     }
 
-    if ($message) {
-        $alerts[] = [
-            'vesselName' => $passvess['Vesselname'],
-            'expDateLoadline' => $expDateLoadline->format('F j, Y'),
-            'estDateNextDD' => $estDateNextDD->format('F j, Y'),
-            'type' => 'passenger',
-            'iconColor' => $iconColor,
-            'id' => $passvess['id'],
-            'href' => $href,
-            'message' => $message
-        ];
-    }
-}
-
-$selectCargo = $con->query("SELECT * FROM tbl_cargo_record");
-
-while ($cargovess = $selectCargo->fetch_assoc()) {
-   
-    $expDateLoadline = new DateTime($cargovess['ExpDateLoadline']);
-    $estDateNextDD = new DateTime($cargovess['EstDateNextDD']);
-    $currentDate = new DateTime();
-
+ 
     
-    // Calculate the difference
-    $interval = $expDateLoadline->diff($estDateNextDD);
-    $years = $interval->y;
-    $months = $interval->m;
-    $days = $interval->d;
+    $type = $vessel['type']; // Assuming you have a 'type' field in your records
 
-    // Calculate the difference between current date and EstDateNextDD
-    $diffToEstDateNextDD = $currentDate->diff($estDateNextDD);
-    $daysToEstDateNextDD = $diffToEstDateNextDD->days;
-
-    // Define a flag for closeness to drydock date
-    $closeToDD = $daysToEstDateNextDD <= 60; // 2 months close to EstDateNextDD
-    $oneYearBeforeDD = $daysToEstDateNextDD >= 365;
-    if (strpos($cargovess['EstDateNextDD'], '0000') === 0 || $closeToDD) {
-        continue;
-    }
-
-    $message = '';
-    $href = '';
-    $iconColor = '';
-
-    // Check if the difference is close to 2 years, exactly 2 years, or within those 2 years
-    if (($years == 2  || $years < 2 && $closeToDD || $years < 2  || $oneYearBeforeDD ) ) {
-        $message = "exceed the limit of Expiration Date";
-        $href = "tbl_renew.php?rid=" . htmlspecialchars($cargovess['rid']);
-        $iconColor = 'bg-danger'; // Red color for urgent notifications
-    } elseif ($closeToDD) {
-        $message = "needs to Drydock";
-        $href = "tbl_extend.php?rid=" . htmlspecialchars($cargovess['rid']);
-        $iconColor = 'bg-warning'; // Yellow color for less urgent notifications
-    }
-
-    if ($message) {
+    if ($message || $type === 'p' || $type === 'c') {
         $alerts[] = [
-            'vesselName' => $cargovess['Vesselname'],
+            'vesselName' => $vessel['Vesselname'],
             'expDateLoadline' => $expDateLoadline->format('F j, Y'),
             'estDateNextDD' => $estDateNextDD->format('F j, Y'),
-            'type' => 'cargo',
+            'type' => $type,
             'iconColor' => $iconColor,
-            'id' => $cargovess['rid'],
+            'id' => $vessel['id'],
             'href' => $href,
             'message' => $message
         ];
     }
+    
+  
 }
 
 
@@ -227,7 +178,7 @@ while ($cargovess = $selectCargo->fetch_assoc()) {
                     <a href="<?php echo htmlspecialchars($alert['href']); ?>" class="dropdown-item d-flex align-items-center">
                         <div class="mr-3">
                             <div class="icon-circle <?php echo htmlspecialchars($alert['iconColor']); ?>">
-                                <?php if ($alert['type'] == 'passenger'): ?>
+                                <?php if ($alert['type'] == 'p'): ?>
                                     <i class="fas fa-ship text-white"></i>
                                 <?php else: ?>
                                     <i class="fas fa-box text-white"></i>

@@ -164,7 +164,7 @@ if ($rid) {
                         </tbody>
                     </table>
                     <div class="mt-3 text-center">
-                        <a href="PassVessTable.php">
+                        <a href="CargoVessTable.php">
                             <button id="backButton" class="btn btn-primary">Back</button>
                         </a>
                     </div>
