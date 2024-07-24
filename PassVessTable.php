@@ -26,6 +26,7 @@ if (isset($_POST['logout'])) {
 
 if (isset($_POST['inputpass'])) {
     // Retrieve form data
+    $type = $_POST['type'];
     $VesselCode = $_POST['VesselCode'];
     $Vesselname = $_POST['Vesselname'];
     $DateDD = $_POST['DateDD'];
@@ -35,14 +36,15 @@ if (isset($_POST['inputpass'])) {
     $EstDateNextDD = $_POST['EstDateNextDD'];
     $Remarks = $_POST['Remarks'];
     // Check if the DateInWaterDD is already taken
-    $check_VesselCode = $con->query("SELECT * FROM tbl_passenger_record WHERE VesselCode = '$VesselCode'");
+    $check_VesselCode = $con->query("SELECT * FROM tbl_records WHERE VesselCode = '$VesselCode' AND Vesselname = '$Vesselname' ");
   
     if ($check_VesselCode->num_rows > 0) {
         echo '<script>alert("The Vessel Code is already taken")</script>';
     } else {
       
-        $register = $con->prepare("INSERT INTO tbl_passenger_record (VesselCode, Vesselname, DateDD, DateInWaterDD, ExpDateLoadline, PlaceLastDD, EstDateNextDD, Remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $register->bind_param("ssssssss", $VesselCode, $Vesselname, $DateDD, $DateInWaterDD, $ExpDateLoadline, $PlaceLastDD, $EstDateNextDD, $Remarks);
+        $register = $con->prepare("INSERT INTO tbl_records (type, VesselCode, Vesselname, DateDD, DateInWaterDD, ExpDateLoadline, PlaceLastDD, EstDateNextDD, Remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $register->bind_param("sssssssss", $type, $VesselCode, $Vesselname, $DateDD, $DateInWaterDD, $ExpDateLoadline, $PlaceLastDD, $EstDateNextDD, $Remarks);
+        
         $active = 0; // User is not yet active
         $register->execute();
   
@@ -76,7 +78,7 @@ if (isset($_POST['inputpass'])) {
             }
         }
     }
-  }
+}
   
 ?>
 <!DOCTYPE html>
@@ -355,7 +357,8 @@ if (isset($_POST['inputpass'])) {
             </div>
             <div class="modal-body">
                 <!-- Form content goes here -->
-                <form action="vesselTable.php" method="POST">
+                <form action="PassVessTable.php" method="POST">
+                    <input type="hidden" name="type" value="p">
                     <div class="row">
                         <div class="col-md-6 border-right">
                             <div class="form-group">

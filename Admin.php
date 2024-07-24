@@ -24,6 +24,38 @@ if (isset($_POST['logout'])) {
   exit();
 }
 
+ob_start();
+if (isset($_POST['update'])) {
+    if (isset($_GET['id'])) {
+        $id = $_GET['id'];
+        $VesselCode = htmlspecialchars($_POST['VesselCode']);
+        $DateDD = htmlspecialchars($_POST['DateDD']);
+        $ExpDateLoadline = htmlspecialchars($_POST['ExpDateLoadline']);
+        $Vesselname = htmlspecialchars($_POST['Vesselname']);
+        $DateInWaterDD = htmlspecialchars($_POST['DateInWaterDD']);
+        $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
+        $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
+        $Remarks = htmlspecialchars($_POST['Remarks']);
+
+        // Perform the database update query for tbl_passenger_record
+        $update_query = "UPDATE tbl_records SET VesselCode ='$VesselCode', DateDD ='$DateDD', ExpDateLoadline ='$ExpDateLoadline',
+                         Vesselname ='$Vesselname', DateInWaterDD ='$DateInWaterDD', PlaceLastDD ='$PlaceLastDD', EstDateNextDD ='$EstDateNextDD',
+                         Remarks ='$Remarks' WHERE id ='$id'";
+
+        // Execute the update query
+        $result = mysqli_query($con, $update_query);
+
+        if (!$result) {
+            // Display an error message or handle the error appropriately
+            echo "Error: " . mysqli_error($con);
+        } else {
+            // Redirect to Admin.php after successful update
+            header('Location: Admin.php');
+            ob_end_flush(); // Flush the output buffer
+            exit(); // Ensure no further code is executed
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -99,7 +131,7 @@ if (isset($_POST['logout'])) {
                         <div class="col-lg-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">DryDock Datatables</h5>
+                                    <h5 class="card-title">Vessels Management Table</h5>
 
                                     <!-- Table with stripped rows -->
                                         <div class="table-responsive">
@@ -130,25 +162,16 @@ if (isset($_POST['logout'])) {
                                                         $i = 1;
 
                                                         // Combined query using UNION with consistent column count and aliases
-                                                        $selectAll = $con->query("
-                                                            SELECT cr.rid AS id, cr.VesselCode, cr.Vesselname, cr.DateDD, cr.DateInWaterDD, cr.ExpDateLoadline, cr.PlaceLastDD, cr.EstDateNextDD, cr.Remarks, 'cargo' AS type 
-                                                            FROM tbl_cargo_record cr
-                                                            INNER JOIN cargo_list cl ON cr.rid = cl.rid
-                                                            WHERE cr.DateInWaterDD = '0000-00-00' AND cl.DateInWaterDD = '0000-00-00'
-                                                            UNION
-                                                            SELECT pr.id AS id, pr.VesselCode, pr.Vesselname, pr.DateDD, pr.DateInWaterDD, pr.ExpDateLoadline, pr.PlaceLastDD, pr.EstDateNextDD, pr.Remarks, 'passenger' AS type 
-                                                            FROM tbl_passenger_record pr
-                                                            INNER JOIN passenger_list pl ON pr.id = pl.id
-                                                            WHERE pr.DateInWaterDD = '0000-00-00' AND pl.DateInWaterDD = '0000-00-00'
-                                                        ");
+                                                        $selectAll = $con->query("SELECT * FROM tbl_records");
 
                                                         while ($vessel = $selectAll->fetch_assoc()) :
+                                                            $formattedDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
                                                         ?>
                                                     <tr>
                                                         <th scope="row"><?php echo $i++; ?></th>
-                                                        <td><?php echo $vessel['type'] == 'cargo' ? 'Cargo' : 'Passenger'; ?></td>
+                                                        <td><?php echo $vessel['type'] == 'c' ? 'Cargo' : 'Passenger'; ?></td>
                                                         <td><?php echo $vessel['Vesselname']; ?></td>
-                                                        <td><?php echo $vessel['DateDD']; ?></td>
+                                                        <td><?php echo $formattedDate; ?></td>
                                                         <td><?php echo $vessel['PlaceLastDD']; ?></td>
                                                         <td><?php echo $vessel['Remarks']; ?></td>
                                                         <td>
@@ -168,44 +191,44 @@ if (isset($_POST['logout'])) {
                                                             </div>
                                                             <div class="modal-body">
                                                             <!-- Add your form fields and content here -->
-                                                            <form action="question_list.php?title_id=<?php //echo $vessel['rid']; ?>" method="post">
+                                                            <form action="Admin.php?id=<?php echo $vessel['id']; ?>" method="post">
                                                                 
                                                                 <div class="row">
                                                                     <div class="col-md-6 border-right">
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Vessel Code</label>
-                                                                            <input type="text" name="VesselCode" class="form-control form-control-sm" value="<?php echo $vessel['VesselCode']; ?>" disabled>
+                                                                            <input type="text" name="VesselCode" class="form-control form-control-sm" value="<?php echo $vessel['VesselCode']; ?>" >
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Date of DryDock</label>
-                                                                            <input type="date" name="DateDD" class="form-control form-control-sm" value="<?php echo $vessel['DateDD'] ? $vessel['DateDD']: ''; ?>" disabled>
+                                                                            <input type="date" name="DateDD" class="form-control form-control-sm" value="<?php echo $vessel['DateDD'] ? $vessel['DateDD']: ''; ?>" >
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Expiration Date of Loadline</label>
-                                                                            <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" value="<?php echo $vessel['ExpDateLoadline'] ? $vessel['ExpDateLoadline']: ''; ?>" disabled>
+                                                                            <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" value="<?php echo $vessel['ExpDateLoadline'] ? $vessel['ExpDateLoadline']: ''; ?>" >
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Estimated Date of Next DryDock</label>
-                                                                            <input type="date" name="EstDateNextDD" class="form-control form-control-sm" value="<?php echo $vessel['EstDateNextDD'] ? $vessel['EstDateNextDD']: ''; ?>" disabled>
+                                                                            <input type="date" name="EstDateNextDD" class="form-control form-control-sm" value="<?php echo $vessel['EstDateNextDD'] ? $vessel['EstDateNextDD']: ''; ?>" >
                                                                         </div>
                                                                     </div>
                                                                     <div class="col-md-6">
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Vessel Name</label>
-                                                                            <input type="text" name="Vesselname" class="form-control form-control-sm" value="<?php echo $vessel['Vesselname']; ?>" disabled>
+                                                                            <input type="text" name="Vesselname" class="form-control form-control-sm" value="<?php echo $vessel['Vesselname']; ?>" >
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="" class="control-label">Date of In-Water DryDock</label>
-                                                                            <input type="date" name="DateInWaterDD" class="form-control form-control-sm" value="<?php echo $vessel['DateInWaterDD'] ? $vessel['DateInWaterDD']: ''; ?>" disabled>
+                                                                            <input type="date" name="DateInWaterDD" class="form-control form-control-sm" value="<?php echo $vessel['DateInWaterDD'] ? $vessel['DateInWaterDD']: ''; ?>" >
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label class="control-label">Place of Last DryDock</label>
-                                                                            <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" disabled><?php echo $vessel['PlaceLastDD']; ?></textarea>
+                                                                            <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" ><?php echo $vessel['PlaceLastDD']; ?></textarea>
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="remarks" class="control-label">Remarks</label>
-                                                                            <select class="form-control form-control-sm" id="Remarks" name="Remarks" disabled>
-                                                                                <option value="" disabled selected>Select Options</option>
+                                                                            <select class="form-control form-control-sm" id="Remarks" name="Remarks" >
+                                                                                <option value=""  selected>Select Options</option>
                                                                                 <option value="Currently at Sangali" <?php echo ($vessel['Remarks'] == 'Currently at Sangali') ? 'selected' : ''; ?>>Currently at Sangali</option>
                                                                                 <option value="On Voyage" <?php echo ($vessel['Remarks'] == 'On Voyage') ? 'selected' : ''; ?>>On Voyage</option>
                                                                                 <option value="Waiting for the requirements" <?php echo ($vessel['Remarks'] == 'Waiting for the requirements') ? 'selected' : ''; ?>>Waiting for the requirements</option>
@@ -222,6 +245,9 @@ if (isset($_POST['logout'])) {
                                                                 <div class="col-lg-12 text-center">
                                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">
                                                                     Cancel
+                                                                </button>
+                                                                <button type="submit" class="btn btn-success" name="update">
+                                                                    Update
                                                                 </button>
                                                                 </div>
                                                             </form>
@@ -281,71 +307,7 @@ if (isset($_POST['logout'])) {
         </div>
     </div>
 
-    <div class="modal fade" id="notificationModal-<?php echo $alert['id'] . '-' . $alert['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="csvModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-        <div class="modal-content">
-        <div class="modal-header">
-            <h5 class="modal-title" id="csvModalLabel">Vessel Maintenance Dates</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-        <div class="modal-body">
-            <!-- Form content goes here -->
-            <form action="vesselTable.php" method="POST">
-                <div class="row">
-                    <div class="col-md-6 border-right">
-                        <div class="form-group">
-                            <label for="" class="control-label">Expiration Date of Loadline</label>
-                            <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="" class="control-label">Renew Date of Loadline</label>
-                            <input type="date" name="EstDateNextDD" class="form-control form-control-sm" disabled>
-                        </div>
-                        <div class="form-group justify-content-end d-flex">
-                            <button type="button" class="btn btn-success" >Renew</button>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="" class="control-label">Estimated Date of Next DryDock</label>
-                            <input type="date" name="EstDateNextDD" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="" class="control-label">Extend Date of Next DryDock</label>
-                            <input type="date" name="DateInWaterDD" class="form-control form-control-sm" disabled>
-                        </div>
-                        <div class="form-group justify-content-end d-flex">
-                            <button type="button" class="btn btn-success" >Extend</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                <div class="col-md-12 border-top pt-4">
-                    <!-- update DD and Place -->
-                        <div class="form-group">
-                            <label for="" class="control-label">Date of DryDock</label>
-                            <input type="date" name="DateDD" class="form-control form-control-sm" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label">Place of Last DryDock</label>
-                            <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" required><?php echo $vessel['PlaceLastDD']; ?></textarea>
-                        </div>
-                        <div class="form-group justify-content-end d-flex">
-                            <button type="button" class="btn btn-success" >Extend</button>
-                        </div>
-                    </div>
-                </div>
-        </div>
-        <div class="modal-footer text-right justify-content-center d-flex">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary" name="inputcargo">Save changes</button>
-        </div>
-        </form>
-        </div>
-    </div>
-</div>
+   
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -359,9 +321,13 @@ if (isset($_POST['logout'])) {
     <!-- Page level plugins -->
     <script src="vendor/chart.js/Chart.min.js"></script>
 
+
+    <!-- Page level plugins -->
+    <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
     <!-- Page level custom scripts -->
     <script src="js/demo/chart-area-demo.js"></script>
     <script src="js/demo/chart-pie-demo.js"></script>
-
+    <script src="js/demo/datatables-demo.js"></script>
 </body>
 </html>

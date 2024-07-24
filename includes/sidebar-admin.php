@@ -57,8 +57,8 @@
     <!-- Nav Item - Charts -->
     <li class="nav-item">
         <a class="nav-link" href="Admin.php">
-            <i class="fas fa-fw fa-table"></i>
-            <span>Extension Date Vessel</span>
+            <i class="fas fa-fw fa-anchor"></i>
+            <span>Vessels Management</span>
         </a>
     </li>
 

@@ -24,12 +24,12 @@ if (isset($_POST['logout'])) {
   exit();
 }
 
-$rid = isset($_GET['rid']) ? $_GET['rid'] : null;
+$id = isset($_GET['id']) ? $_GET['id'] : null;
 
-if ($rid) {
-    // Fetch the record based on rid
-    $selectRecord = $con->prepare("SELECT * FROM tbl_cargo_record WHERE rid = ?");
-    $selectRecord->bind_param("s", $rid);
+if ($id) {
+    // Fetch the record based on id
+    $selectRecord = $con->prepare("SELECT * FROM tbl_records WHERE id = ?");
+    $selectRecord->bind_param("s", $id);
     $selectRecord->execute();
     $result = $selectRecord->get_result();
     $cargovess = $result->fetch_assoc();

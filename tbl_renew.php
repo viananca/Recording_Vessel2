@@ -123,16 +123,23 @@ if ($id) {
                                     <!-- Table with stripped rows -->
                                         <div class="row">
                                             <div class="col-md-6 border-right">
-                                                <form action="tbl_renew.php?id=<?php echo $vessel['id']; ?>" method="POST">
-                                                     <?php
+                                                <form action="tbl_renew.php<?php
+                                                    if (isset($_GET['rid'])) {
+                                                        echo '?rid=' . htmlspecialchars($_GET['rid']);
+                                                    }
+                                                    if (isset($_GET['id'])) {
+                                                        echo isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
+                                                    }
+                                                ?>" method="POST">
+                                                    <?php
                                                         if (isset($_POST['btnextend'])) {
-                                                            // Check if 'btnextend' is clicked and handle update based on parameters
+                                                            // Check if 'btnextend2' is clicked and handle update based on parameters
                                                             if (isset($_GET['id'])) {
                                                                 $id = $_GET['id'];
                                                                 $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
 
                                                                 // Perform the database update query for tbl_passenger_record
-                                                                $update_query = "UPDATE tbl_passenger_record SET EstDateNextDD='$EstDateNextDD' WHERE id ='$id'";
+                                                                $update_query = "UPDATE tbl_records SET EstDateNextDD= '$EstDateNextDD' WHERE id ='$id'";
                                                             }
 
                                                             // Execute the update query
@@ -180,20 +187,13 @@ if ($id) {
                                                     <?php
                                                     if (isset($_POST['btnextend2'])) {
                                                         // Check if 'btnextend2' is clicked and handle update based on parameters
-                                                        if (isset($_GET['rid'])) {
-                                                            $rid = $_GET['rid'];
-                                                            $DateDD = htmlspecialchars($_POST['DateDD']);
-                                                            $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
-
-                                                            // Perform the database update query for tbl_cargo_record
-                                                            $update_query = "UPDATE tbl_cargo_record SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE rid ='$rid'";
-                                                        } elseif (isset($_GET['id'])) {
+                                                        if (isset($_GET['id'])) {
                                                             $id = $_GET['id'];
                                                             $DateDD = htmlspecialchars($_POST['DateDD']);
                                                             $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
 
                                                             // Perform the database update query for tbl_passenger_record
-                                                            $update_query = "UPDATE tbl_passenger_record SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE id ='$id'";
+                                                            $update_query = "UPDATE tbl_records SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE id ='$id'";
                                                         }
 
                                                         // Execute the update query
@@ -243,34 +243,35 @@ if ($id) {
                                                 }
                                             ?>" method="POST">
                                                     <?php
-                                                    if (isset($_POST['btnrenew'])) {
-                                                        // Check if 'btnrenew' is clicked and handle update based on parameters
-                                                        if (isset($_GET['rid'])) {
-                                                            $rid = $_GET['rid'];
-                                                            $ExpDateLoadline = htmlspecialchars($_POST['ExpDateLoadline']);
+                                                        if (isset($_POST['btnrenew'])) {
+                                                            // Check if 'btnextend2' is clicked and handle update based on parameters
+                                                            if (isset($_GET['id'])) {
+                                                                $id = $_GET['id'];
+                                                                $ExpDateLoadline = htmlspecialchars($_POST['ExpDateLoadline']);
+    
+                                                                // Perform the database update query for tbl_passenger_record
+                                                                $update_query = "UPDATE tbl_records SET ExpDateLoadline='$ExpDateLoadline' WHERE id ='$id'";
+                                                            }
 
-                                                            // Perform the database update query for tbl_cargo_record
-                                                            $update_query = "UPDATE tbl_cargo_record SET ExpDateLoadline='$ExpDateLoadline' WHERE rid ='$rid'";
-                                                        } elseif (isset($_GET['id'])) {
-                                                            $id = $_GET['id'];
-                                                            $ExpDateLoadline = htmlspecialchars($_POST['ExpDateLoadline']);
+                                                            // Execute the update query
+                                                            $result = mysqli_query($con, $update_query);
 
-                                                            // Perform the database update query for tbl_passenger_record
-                                                            $update_query = "UPDATE tbl_passenger_record SET ExpDateLoadline='$ExpDateLoadline' WHERE id ='$id'";
+                                                            if (!$result) {
+                                                                // Display an error message or handle the error appropriately
+                                                                echo "Error: " . mysqli_error($con);
+                                                            } else {
+                                                                // Redirect to refresh the page after successful update
+                                                                $redirect_url = $_SERVER['PHP_SELF'];
+                                                                if (isset($_GET['rid'])) {
+                                                                    $redirect_url .= '?rid=' . htmlspecialchars($_GET['rid']);
+                                                                }
+                                                                if (isset($_GET['id'])) {
+                                                                    $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
+                                                                }
+                                                                echo '<script>window.location.href = "'. $redirect_url .'";</script>';
+                                                                exit();
+                                                            }
                                                         }
-
-                                                        // Execute the update query
-                                                        $result = mysqli_query($con, $update_query);
-
-                                                        if (!$result) {
-                                                            // Display an error message or handle the error appropriately
-                                                            echo "Error: " . mysqli_error($con);
-                                                        } else {
-                                                            // Redirect to refresh the page after successful update
-                                                            echo '<script>window.location.href = "'.$_SERVER['PHP_SELF'].'";</script>';
-                                                            exit();
-                                                        }
-                                                    }
                                                     ?>
                                                     <div class="form-group">
                                                         <label for="" class="control-label">Expiration Date of Loadline</label>

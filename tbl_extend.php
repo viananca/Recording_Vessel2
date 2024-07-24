@@ -25,11 +25,9 @@ if (isset($_POST['logout'])) {
 }
 
 $id = isset($_GET['id']) ? $_GET['id'] : null;
-$rid = isset($_GET['rid']) ? $_GET['rid'] : null;
-
 if ($id) {
     // Fetch the record based on id
-    $selectRecord = $con->prepare("SELECT * FROM tbl_passenger_record WHERE id = ?");
+    $selectRecord = $con->prepare("SELECT * FROM tbl_records WHERE id = ?");
     $selectRecord->bind_param("s", $id);
     $selectRecord->execute();
     $result = $selectRecord->get_result();
@@ -38,20 +36,6 @@ if ($id) {
     $EstDateNextDD = $passvess['EstDateNextDD'];
     $PlaceLastDD = $passvess['PlaceLastDD'];
     $Vesselname = $passvess['Vesselname'];
-}
-if ($rid) {
-    // Fetch the record based on id
-    $selectRecord = $con->prepare("SELECT * FROM tbl_cargo_record WHERE rid = ?");
-    $selectRecord->bind_param("s", $rid);
-    $selectRecord->execute();
-    $result = $selectRecord->get_result();
-    $cargovess = $result->fetch_assoc();
-    $ExpDateLoadline = $cargovess['ExpDateLoadline'];
-    $EstDateNextDD = $cargovess['EstDateNextDD'];
-    $PlaceLastDD = $cargovess['PlaceLastDD'];
-    $Vesselname = $cargovess['Vesselname'];
-    
-    $formattedExpDateLoadline = (new DateTime($ExpDateLoadline))->format('Y-m-d');
 }
 ?>
 <?php
@@ -161,20 +145,13 @@ ob_start();
                                                     <?php
                                                     if (isset($_POST['btnextend'])) {
                                                         // Check if 'btnextend' is clicked and handle update based on parameters
-                                                        if (isset($_GET['rid'])) {
-                                                            $rid = $_GET['rid'];
-                                                            $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
-                                                            $Exntd = $_POST['Exntd'];
-
-                                                            // Perform the database update query for tbl_cargo_record
-                                                            $update_query = "UPDATE tbl_cargo_record SET EstDateNextDD='$EstDateNextDD', Exntd = '1' WHERE rid ='$rid'";
-                                                        } elseif (isset($_GET['id'])) {
+                                                        if (isset($_GET['id'])) {
                                                             $id = $_GET['id'];
                                                             $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
-                                                            $Exntd = $_POST['Exntd'];
+                                                            $Extnd = $_POST['Extnd'];
 
                                                             // Perform the database update query for tbl_passenger_record
-                                                            $update_query = "UPDATE tbl_passenger_record SET EstDateNextDD='$EstDateNextDD', Exntd = '1' WHERE id ='$id'";
+                                                            $update_query = "UPDATE tbl_records SET EstDateNextDD='$EstDateNextDD', Extnd = '1' WHERE id ='$id'";
                                                         }
 
                                                         // Execute the update query
@@ -184,15 +161,19 @@ ob_start();
                                                             // Display an error message or handle the error appropriately
                                                             echo "Error: " . mysqli_error($con);
                                                         } else {
-                                                            // Redirect to ExtDateVessTable.php after successful update
+                                                            // Redirect to refresh the page after successful update
+                                                            $redirect_url = $_SERVER['PHP_SELF'];
+                                                            if (isset($_GET['id'])) {
+                                                                $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
+                                                            }
                                                             header('Location: ExtDateVessTable.php');
-                                                            ob_end_flush();
                                                             exit();
                                                         }
                                                     }
                                                     ?>
                                                     
                                                     <div class="form-group">
+                                                        <input type="hidden" name="Extnd">
                                                         <label for="" class="control-label">Estimated Date of Next DryDock</label>
                                                         <input type="date" value="<?php echo $EstDateNextDD; ?>" class="form-control form-control-sm" disabled readonly>
                                                     </div>
@@ -218,23 +199,16 @@ ob_start();
                                                         echo isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
                                                     }
                                                 ?>" method="POST">
-                                                    <?php
+                                                     <?php
                                                     if (isset($_POST['btndateDD'])) {
-                                                        // Check if 'btnextensd2' is clicked and handle update based on parameters
-                                                        if (isset($_GET['rid'])) {
-                                                            $rid = $_GET['rid'];
-                                                            $DateDD = htmlspecialchars($_POST['DateDD']);
-                                                            $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
-
-                                                            // Perform the database update query for tbl_cargo_record
-                                                            $update_query = "UPDATE tbl_cargo_record SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE rid ='$rid'";
-                                                        } elseif (isset($_GET['id'])) {
+                                                        // Check if 'btnextend2' is clicked and handle update based on parameters
+                                                        if (isset($_GET['id'])) {
                                                             $id = $_GET['id'];
                                                             $DateDD = htmlspecialchars($_POST['DateDD']);
                                                             $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
 
                                                             // Perform the database update query for tbl_passenger_record
-                                                            $update_query = "UPDATE tbl_passenger_record SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE id ='$id'";
+                                                            $update_query = "UPDATE tbl_records SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE id ='$id'";
                                                         }
 
                                                         // Execute the update query
@@ -252,7 +226,7 @@ ob_start();
                                                             if (isset($_GET['id'])) {
                                                                 $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
                                                             }
-                                                            header("Location: ExtDateVessTable.php");
+                                                            echo '<script>window.location.href = "'. $redirect_url .'";</script>';
                                                             exit();
                                                         }
                                                     }
