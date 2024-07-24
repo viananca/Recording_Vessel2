@@ -128,12 +128,8 @@ if (isset($_POST['logout'])) {
                                         $threeMonthsBefore = date('Y-m-d', strtotime('-3 months'));
                                     
                                         // Combined query using UNION with date condition
-                                        $selectAll = $con->query("
-                                            SELECT rid AS id, VesselCode, Vesselname, DateDD, EstDateNextDD, ExpDateLoadline, PlaceLastDD, 'cargo' AS type FROM tbl_cargo_record
-                                            WHERE Exntd = '1'
-                                            UNION
-                                            SELECT id, VesselCode, Vesselname, DateDD, EstDateNextDD, ExpDateLoadline, PlaceLastDD, 'passenger' AS type FROM tbl_passenger_record
-                                            WHERE Exntd = '1'
+                                        $selectAll = $con->query("SELECT * FROM tbl_records
+                                            WHERE Extnd = '1'
                                         ");
                                             while ($vessel = $selectAll->fetch_assoc()) :
                                                 $formattedExpDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
@@ -141,7 +137,7 @@ if (isset($_POST['logout'])) {
                                             ?>
                                         <tr>
                                             <th scope="row"><?php echo $i++; ?></th>
-                                            <td><?php echo $vessel['type'] == 'cargo' ? 'Cargo' : 'Passenger'; ?></td>
+                                            <td><?php echo $vessel['type'] == 'c' ? 'Cargo' : 'Passenger'; ?></td>
                                             <td><?php echo $vessel['VesselCode']; ?></td>
                                             <td><?php echo $vessel['Vesselname']; ?></td>
                                             <td><?php echo $formattedExpDate; ?></td>
@@ -175,16 +171,12 @@ if (isset($_POST['logout'])) {
                                                                     $newPlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
                                                                     $DateInWaterDD = htmlspecialchars($_POST['DateInWaterDD']);
                                                                     $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
-                                                                    $Exntd = $_POST['Exntd'];
+                                                                    $Extnd = $_POST['Extnd'];
 
                                                                     // Update query based on the type of vessel record
-                                                                    if ($type == 'cargo') {
-                                                                        $update_query = "UPDATE tbl_cargo_record SET DateDD = '$DateDD', PlaceLastDD = '$newPlaceLastDD', Exntd = '0', DateInWaterDD = '0000-00-00', EstDateNextDD = '0000-00-00'  WHERE rid = '$id'";
-                                                                        $insert_query = "INSERT INTO cargo_list (rid, DateDD, DateInWaterDD, PlaceLastDD, EstDateNextDD) VALUES ('$id', '$DateDD', '0000-00-00', '$newPlaceLastDD', '0000-00-00')";
-                                                                    } elseif ($type == 'passenger') {
-                                                                        $update_query = "UPDATE tbl_passenger_record SET DateDD = '$DateDD', PlaceLastDD = '$newPlaceLastDD', Exntd = '0', DateInWaterDD = '0000-00-00', EstDateNextDD = '0000-00-00' WHERE id = '$id'";
-                                                                        $insert_query = "INSERT INTO passenger_list (id, DateDD, DateInWaterDD, PlaceLastDD, EstDateNextDD) VALUES ('$id', '$DateDD', '0000-00-00', '$newPlaceLastDD', '0000-00-00')";
-                                                                    }
+                                                                    $update_query = "UPDATE tbl_records SET DateDD = '$DateDD', PlaceLastDD = '$newPlaceLastDD', Extnd = '0', DateInWaterDD = '0000-00-00', EstDateNextDD = '0000-00-00'  WHERE id = '$id'";
+                                                                    $insert_query = "INSERT INTO tbl_list (id, DateDD, DateInWaterDD, PlaceLastDD, EstDateNextDD) VALUES ('$id', '$DateDD', '0000-00-00', '$newPlaceLastDD', '0000-00-00')";
+                                                                   
 
                                                                     // Execute the update query
                                                                     if ($con->query($update_query) === TRUE) {
@@ -236,16 +228,12 @@ if (isset($_POST['logout'])) {
                                                                     <?php
                                                                     if (isset($_POST['btnrenew'])) {
                                                                         $id = $_POST['id'];
-                                                                        $rid = $_POST['rid'];
                                                                         $type = $_POST['type'];
                                                                         $ExpDateLoadline = $_POST['ExpDateLoadline'];
                                                 
                                                                         // Update query based on the type of vessel record
-                                                                        if ($type == 'cargo') {
-                                                                            $update_query = "UPDATE tbl_cargo_record SET ExpDateLoadline='$ExpDateLoadline' WHERE rid = '$id'";
-                                                                        } elseif ($type == 'passenger') {
-                                                                            $update_query = "UPDATE tbl_passenger_record SET ExpDateLoadline='$ExpDateLoadline' WHERE id = '$id'";
-                                                                        }
+                                                                        $update_query = "UPDATE tbl_records SET ExpDateLoadline='$ExpDateLoadline' WHERE id = '$id'";
+                                                                        
                                                 
                                                                         // Execute the update query
                                                                         if ($con->query($update_query) === TRUE) {
