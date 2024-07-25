@@ -137,9 +137,10 @@ if ($id) {
                                                             if (isset($_GET['id'])) {
                                                                 $id = $_GET['id'];
                                                                 $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
+                                                                $Extnd = $_POST['Extnd'];
 
                                                                 // Perform the database update query for tbl_passenger_record
-                                                                $update_query = "UPDATE tbl_records SET EstDateNextDD= '$EstDateNextDD' WHERE id ='$id'";
+                                                                $update_query = "UPDATE tbl_records SET EstDateNextDD= '$EstDateNextDD', Extnd = '1' WHERE id ='$id'";
                                                             }
 
                                                             // Execute the update query
@@ -163,6 +164,7 @@ if ($id) {
                                                         }
                                                     ?>
                                                     <div class="form-group">
+                                                        <input type="hidden" name="Extnd">
                                                         <label for="" class="control-label">Estimated Date of Next DryDock</label>
                                                         <input type="date" name="EstDateNextDD" value="<?php echo $EstDateNextDD; ?>" class="form-control form-control-sm" disabled readonly>
                                                     </div>
@@ -191,28 +193,34 @@ if ($id) {
                                                             $id = $_GET['id'];
                                                             $DateDD = htmlspecialchars($_POST['DateDD']);
                                                             $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
+                                                            $DateInWaterDD = htmlspecialchars($_POST['DateInWaterDD']);
+                                                            $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
+                                                            $Extnd = $_POST['Extnd'];
 
                                                             // Perform the database update query for tbl_passenger_record
-                                                            $update_query = "UPDATE tbl_records SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD' WHERE id ='$id'";
+                                                            $update_query = "UPDATE tbl_records SET DateDD='$DateDD', PlaceLastDD= '$PlaceLastDD', Extnd = '0', DateInWaterDD = '0000-00-00', EstDateNextDD = '0000-00-00' WHERE id ='$id'";
+                                                            $insert_query = "INSERT INTO tbl_list (id, DateDD, DateInWaterDD, PlaceLastDD, EstDateNextDD) VALUES ('$id', '$DateDD', '0000-00-00', '$PlaceLastDD', '0000-00-00')";
                                                         }
 
                                                         // Execute the update query
-                                                        $result = mysqli_query($con, $update_query);
-
-                                                        if (!$result) {
-                                                            // Display an error message or handle the error appropriately
-                                                            echo "Error: " . mysqli_error($con);
+                                                        if ($con->query($update_query) === TRUE) {
+                                                            // Execute the insert query for passenger_list table
+                                                            if ($con->query($insert_query) === TRUE) {
+                                                               // Redirect to refresh the page after successful update
+                                                                $redirect_url = $_SERVER['PHP_SELF'];
+                                                                if (isset($_GET['rid'])) {
+                                                                    $redirect_url .= '?rid=' . htmlspecialchars($_GET['rid']);
+                                                                }
+                                                                if (isset($_GET['id'])) {
+                                                                    $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
+                                                                }
+                                                                echo '<script>window.location.href = "'. $redirect_url .'";</script>';
+                                                                exit();
+                                                            } else {
+                                                                echo "Error inserting record: " . $con->error;
+                                                            }
                                                         } else {
-                                                            // Redirect to refresh the page after successful update
-                                                            $redirect_url = $_SERVER['PHP_SELF'];
-                                                            if (isset($_GET['rid'])) {
-                                                                $redirect_url .= '?rid=' . htmlspecialchars($_GET['rid']);
-                                                            }
-                                                            if (isset($_GET['id'])) {
-                                                                $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
-                                                            }
-                                                            echo '<script>window.location.href = "'. $redirect_url .'";</script>';
-                                                            exit();
+                                                            echo "Error updating record: " . $con->error;
                                                         }
                                                     }
                                                 ?>
@@ -224,6 +232,11 @@ if ($id) {
                                                     <div class="form-group">
                                                         <label class="control-label">Place of Last DryDock</label>
                                                         <textarea name="PlaceLastDD" id="" cols="30" rows="2" class="form-control" required><?php echo $PlaceLastDD; ?></textarea>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <input type="hidden" id="DateInWaterDD" name="DateInWaterDD" class="form-control form-control-sm">
+                                                        <input type="hidden" id="EstDateNextDD" name="EstDateNextDD" class="form-control form-control-sm">
+                                                        <input type="hidden" name="Extnd">
                                                     </div>
                                                     <div class="form-group justify-content-end d-flex">
                                                         <button type="submit" name="btnextend2" class="btn btn-success">DryDock</button>

@@ -128,8 +128,7 @@ if (isset($_POST['logout'])) {
                                         $threeMonthsBefore = date('Y-m-d', strtotime('-3 months'));
                                     
                                         // Combined query using UNION with date condition
-                                        $selectAll = $con->query("SELECT * FROM tbl_records
-                                            WHERE Extnd = '1'
+                                        $selectAll = $con->query("SELECT * FROM tbl_records WHERE Extnd = '1'
                                         ");
                                             while ($vessel = $selectAll->fetch_assoc()) :
                                                 $formattedExpDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
@@ -195,6 +194,7 @@ if (isset($_POST['logout'])) {
                                                                 <!-- Hidden input fields to pass id and type -->
                                                                 <input type="hidden" name="id" value="<?php echo htmlspecialchars($vessel['id']); ?>">
                                                                 <input type="hidden" name="type" value="<?php echo htmlspecialchars($vessel['type']); ?>">
+                                                                <input type="hidden" name="Extnd">
 
                                                                 <div class="row">
                                                                     <div class="col-md-12">

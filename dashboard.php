@@ -131,9 +131,9 @@ if (isset($_POST['logout'])) {
 
                                                         // Combined query using UNION with consistent column count and aliases
                                                         $selectAll = $con->query("
-                                                            SELECT pr.id AS id, pr.VesselCode, pr.Vesselname, pr.DateDD, pr.DateInWaterDD, pr.PlaceLastDD, pr.Remarks, 'passenger' AS type 
+                                                            SELECT pr.id AS id, pr.type, pr.VesselCode, pr.Vesselname, pr.DateDD, pr.DateInWaterDD, pr.PlaceLastDD, pr.Remarks
                                                             FROM tbl_records pr
-                                                            INNER JOIN passenger_list pl ON pr.id = pl.id
+                                                            INNER JOIN tbl_list pl ON pr.id = pl.id
                                                             WHERE pr.DateInWaterDD = '0000-00-00' AND pl.DateInWaterDD = '0000-00-00'
                                                         ");
 
@@ -141,7 +141,7 @@ if (isset($_POST['logout'])) {
                                                         ?>
                                                     <tr>
                                                         <th scope="row"><?php echo $i++; ?></th>
-                                                        <td><?php echo $vessel['type'] == 'cargo' ? 'Cargo' : 'Passenger'; ?></td>
+                                                        <td><?php echo $vessel['type'] == 'c' ? 'Cargo' : 'Passenger'; ?></td>
                                                         <td><?php echo $vessel['Vesselname']; ?></td>
                                                         <td><?php echo $vessel['DateDD']; ?></td>
                                                         <td><?php echo $vessel['PlaceLastDD']; ?></td>
@@ -165,36 +165,46 @@ if (isset($_POST['logout'])) {
                                                                 <!-- Add your form fields and content here -->
                                                                     <form action="dashboard.php" method="post">
                                                                         <?php
-                                                                        if (isset($_POST[''])) {
-                                                                                $id = $_POST['idbtnwaterDD'];
-                                                                                $type = $_POST['type'];
-                                                                                $DateInWaterDD = $_POST['DateInWaterDD'];
-                                                                                $PlaceLastDD = $_POST['PlaceLastDD'];
-                                                                                $EstDateNextDD = $_POST['EstDateNextDD'];
-
-                                                                                 // Calculate EstDateNextDD
-                                                                                $dateInWater = new DateTime($DateInWaterDD);
-                                                                                $dateInWater->add(new DateInterval('P2Y')); // Add 2 years
-                                                                                $EstDateNextDD = $dateInWater->format('Y-m-d');
-
-                                                                                if ($type == 'cargo') {
-                                                                                    $update_query = "UPDATE tbl_cargo_record SET DateInWaterDD='$DateInWaterDD', PlaceLastDD='$PlaceLastDD', EstDateNextDD='$EstDateNextDD' WHERE rid = '$id'";
-                                                                                } elseif ($type == 'passenger') {
-                                                                                    $update_query = "UPDATE tbl_passenger_record SET DateInWaterDD='$DateInWaterDD', PlaceLastDD='$PlaceLastDD', EstDateNextDD='$EstDateNextDD' WHERE id='$id'";
+                                                                        if (isset($_POST['btnwaterDD'])) {
+                                                                            $id = htmlspecialchars($_POST['id']);
+                                                                            $DateInWaterDD = htmlspecialchars($_POST['DateInWaterDD']);
+                                                                            $PlaceLastDD = htmlspecialchars($_POST['PlaceLastDD']);
+                                                                            $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
+                                                                        
+                                                                            $dateInWater = new DateTime($DateInWaterDD);
+                                                                            $dateInWater->add(new DateInterval('P2Y')); // Add 2 years
+                                                                            $EstDateNextDD = $dateInWater->format('Y-m-d');
+                                                                        
+                                                                            // Update query based on the type of vessel record
+                                                                            $update_query = "UPDATE tbl_records SET DateInWaterDD='$DateInWaterDD', PlaceLastDD='$PlaceLastDD', EstDateNextDD='$EstDateNextDD' WHERE id='$id'";
+                                                                           
+                                                                            // Execute the update query
+                                                                            $result = mysqli_query($con, $update_query);
+                                                                        
+                                                                            if (!$result) {
+                                                                                // Display an error message or handle the error appropriately
+                                                                                echo "Error: " . mysqli_error($con);
+                                                                            } else {
+                                                                                // Update the tbl_list table
+                                                                                $update_query_list = "UPDATE tbl_list SET DateInWaterDD='$DateInWaterDD', PlaceLastDD='$PlaceLastDD', EstDateNextDD='$EstDateNextDD' WHERE id='$id'";
+                                                                                mysqli_query($con, $update_query_list);
+                                                                        
+                                                                                // Redirect to refresh the page after successful update
+                                                                                $redirect_url = $_SERVER['PHP_SELF'];
+                                                                                if (isset($_GET['rid'])) {
+                                                                                    $redirect_url .= '?rid=' . htmlspecialchars($_GET['rid']);
                                                                                 }
-
-                                                                                // Execute the update query
-                        
-                                                                                if ($con->query($update_query) === TRUE) {
-                                                                                    echo '<script>window.location.href = "' . $_SERVER['PHP_SELF'] . '";</script>';
-                                                                                    exit();
-                                                                                } else {
-                                                                                    echo "Error updating record: " . $con->error;
+                                                                                if (isset($_GET['id'])) {
+                                                                                    $redirect_url .= isset($_GET['rid']) ? '&id=' . htmlspecialchars($_GET['id']) : '?id=' . htmlspecialchars($_GET['id']);
                                                                                 }
+                                                                                
+                                                                                echo '<script>window.location.href = "' . $redirect_url . '";</script>';
+                                                                                exit();
+                                                                            }
                                                                         }
+                                                                        
                                                                         ?>
                                                                         <input type="hidden" name="id" value="<?php echo $vessel['id']; ?>">
-                                                                        <input type="hidden" name="type" value="<?php echo $vessel['type']; ?>">
                                                                         <div class="row">
                                                                             <div class="col-md-6">
                                                                                 <div class="form-group">
@@ -203,7 +213,7 @@ if (isset($_POST['logout'])) {
                                                                                 </div>
                                                                                 <div class="form-group">
                                                                                     <label for="EstDateNextDD" class="control-label">Estimated Date of Next DryDock</label>
-                                                                                    <input type="text" id="EstDateNextDD-<?php echo $vessel['id']; ?>" name="EstDateNextDD" class="form-control form-control-sm" readonly>
+                                                                                    <input type="text" id="EstDateNextDD-<?php echo $vessel['id']; ?>" name="EstDateNextDD" value="EstDateNextDD-<?php echo $vessel['id']; ?>" class="form-control form-control-sm" readonly>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="col-md-6">
