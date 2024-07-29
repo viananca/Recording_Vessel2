@@ -37,22 +37,39 @@ if (isset($_POST['update'])) {
         $EstDateNextDD = htmlspecialchars($_POST['EstDateNextDD']);
         $Remarks = htmlspecialchars($_POST['Remarks']);
 
-        // Perform the database update query for tbl_passenger_record
-        $update_query = "UPDATE tbl_records SET VesselCode ='$VesselCode', DateDD ='$DateDD', ExpDateLoadline ='$ExpDateLoadline',
-                         Vesselname ='$Vesselname', DateInWaterDD ='$DateInWaterDD', PlaceLastDD ='$PlaceLastDD', EstDateNextDD ='$EstDateNextDD',
-                         Remarks ='$Remarks' WHERE id ='$id'";
+        // Check if the user added a custom remark
+        if ($Remarks === 'Others' && !empty($_POST['OtherRemarks'])) {
+            $Remarks = htmlspecialchars($_POST['OtherRemarks']);
+        }
 
-        // Execute the update query
-        $result = mysqli_query($con, $update_query);
+        // Perform the database update query for tbl_records
+        $update_query = "UPDATE tbl_records SET 
+            VesselCode = ?, DateDD = ?, ExpDateLoadline = ?, Vesselname = ?, DateInWaterDD = ?, PlaceLastDD = ?, EstDateNextDD = ?, Remarks = ? 
+            WHERE id = ?";
+        $stmt = $con->prepare($update_query);
+        $stmt->bind_param("ssssssssi", $VesselCode, $DateDD, $ExpDateLoadline, $Vesselname, $DateInWaterDD, $PlaceLastDD, $EstDateNextDD, $Remarks, $id);
+        
+        if ($stmt->execute()) {
+            // Check if the Remarks already exist
+            $check_remarks = $con->prepare("SELECT * FROM remarks WHERE Remarks = ?");
+            $check_remarks->bind_param("s", $Remarks);
+            $check_remarks->execute();
+            $check_remarks_result = $check_remarks->get_result();
 
-        if (!$result) {
-            // Display an error message or handle the error appropriately
-            echo "Error: " . mysqli_error($con);
-        } else {
+            if ($check_remarks_result->num_rows === 0) {
+                // Insert into the remarks table
+                $insert_remarks = $con->prepare("INSERT INTO remarks (Remarks, added_by) VALUES (?, ?)");
+                $added_by = $_SESSION['user_status']; // Get the user status from the session
+                $insert_remarks->bind_param("ss", $Remarks, $added_by);
+                $insert_remarks->execute();
+            }
+
             // Redirect to Admin.php after successful update
             header('Location: Admin.php');
-            ob_end_flush(); // Flush the output buffer
             exit(); // Ensure no further code is executed
+        } else {
+            // Display an error message or handle the error appropriately
+            echo "Error: " . mysqli_error($con);
         }
     }
 }
@@ -159,8 +176,12 @@ if (isset($_POST['update'])) {
                                                 <tbody>
                                                     <!-- Add more rows as needed -->
                                                     <?php
+                                                        $remarksQuery = $con->query("SELECT DISTINCT Remarks FROM Remarks");
+                                                        $remarksOptions = [];
+                                                        while ($row = $remarksQuery->fetch_assoc()) {
+                                                            $remarksOptions[] = $row['Remarks'];
+                                                        }
                                                         $i = 1;
-
                                                         // Combined query using UNION with consistent column count and aliases
                                                         $selectAll = $con->query("SELECT * FROM tbl_records");
 
@@ -227,16 +248,16 @@ if (isset($_POST['update'])) {
                                                                         </div>
                                                                         <div class="form-group">
                                                                             <label for="remarks" class="control-label">Remarks</label>
-                                                                            <select class="form-control form-control-sm" id="Remarks" name="Remarks" >
-                                                                                <option value=""  selected>Select Options</option>
-                                                                                <option value="Currently at Sangali" <?php echo ($vessel['Remarks'] == 'Currently at Sangali') ? 'selected' : ''; ?>>Currently at Sangali</option>
-                                                                                <option value="On Voyage" <?php echo ($vessel['Remarks'] == 'On Voyage') ? 'selected' : ''; ?>>On Voyage</option>
-                                                                                <option value="Waiting for the requirements" <?php echo ($vessel['Remarks'] == 'Waiting for the requirements') ? 'selected' : ''; ?>>Waiting for the requirements</option>
-                                                                                <option value="Annual DryDock" <?php echo ($vessel['Remarks'] == 'Annual DryDock') ? 'selected' : ''; ?>>Annual DryDock</option>
-                                                                                <option value="Last Extension" <?php echo ($vessel['Remarks'] == 'Last Extension') ? 'selected' : ''; ?>>Last Extension</option>
-                                                                                <option value="On Drydock" <?php echo ($vessel['Remarks'] == 'On Drydock') ? 'selected' : ''; ?>>On Dry dock</option>
-                                                                                <option value="No Operation" <?php echo ($vessel['Remarks'] == 'No Operation') ? 'selected' : ''; ?>>No Operation</option>
+                                                                            <select class="form-control form-control-sm" id="Remarks" name="Remarks" onchange="toggleRemarksInput(this)">
+                                                                                <option value="" disabled selected>Select Options</option>
+                                                                                <?php foreach ($remarksOptions as $remark) : ?>
+                                                                                    <option value="<?php echo $remark; ?>" <?php echo ($vessel['Remarks'] == $remark) ? 'selected' : ''; ?>>
+                                                                                        <?php echo $remark; ?>
+                                                                                    </option>
+                                                                                <?php endforeach; ?>
+                                                                                <option value="Others">Others</option>
                                                                             </select>
+                                                                            <input type="text" class="form-control form-control-sm mt-2 other-remarks-input" name="OtherRemarks" placeholder="Please specifys" style="display: none;">
                                                                         </div>
                                                                     </div>
                                                                 
@@ -329,5 +350,15 @@ if (isset($_POST['update'])) {
     <script src="js/demo/chart-area-demo.js"></script>
     <script src="js/demo/chart-pie-demo.js"></script>
     <script src="js/demo/datatables-demo.js"></script>
+    <script>
+    function toggleRemarksInput(selectElement) {
+        var otherRemarksInput = selectElement.closest('.form-group').querySelector('.other-remarks-input');
+        if (selectElement.value === 'Others') {
+            otherRemarksInput.style.display = 'block';
+        } else {
+            otherRemarksInput.style.display = 'none';
+        }
+    }
+</script>
 </body>
 </html>
