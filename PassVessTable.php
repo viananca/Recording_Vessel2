@@ -35,6 +35,11 @@ if (isset($_POST['inputpass'])) {
     $PlaceLastDD = $_POST['PlaceLastDD'];
     $EstDateNextDD = $_POST['EstDateNextDD'];
     $Remarks = $_POST['Remarks'];
+
+    // Check if the user added a custom remark
+    if ($Remarks === 'Others' && !empty($_POST['OtherRemarks'])) {
+        $Remarks = $_POST['OtherRemarks'];
+    }
     // Check if the DateInWaterDD is already taken
     $check_VesselCode = $con->query("SELECT * FROM tbl_records WHERE VesselCode = '$VesselCode' AND Vesselname = '$Vesselname' ");
   
@@ -44,13 +49,24 @@ if (isset($_POST['inputpass'])) {
       
         $register = $con->prepare("INSERT INTO tbl_records (type, VesselCode, Vesselname, DateDD, DateInWaterDD, ExpDateLoadline, PlaceLastDD, EstDateNextDD, Remarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $register->bind_param("sssssssss", $type, $VesselCode, $Vesselname, $DateDD, $DateInWaterDD, $ExpDateLoadline, $PlaceLastDD, $EstDateNextDD, $Remarks);
-        
-        $active = 0; // User is not yet active
         $register->execute();
   
         if ($register) {
-            // Generate the activation link
-        
+          // Insert into the remarks table
+            // Check if the Remarks already exist
+            $check_remarks = $con->prepare("SELECT * FROM remarks WHERE Remarks = ?");
+            $check_remarks->bind_param("s", $Remarks);
+            $check_remarks->execute();
+            $check_remarks_result = $check_remarks->get_result();
+
+            if ($check_remarks_result->num_rows === 0) {
+                // Insert into the remarks table
+                $insert_remarks = $con->prepare("INSERT INTO remarks (Remarks, added_by) VALUES (?, ?)");
+                $added_by = $_SESSION['user_status']; // Get the user status from the session
+                $insert_remarks->bind_param("ss", $Remarks, $added_by);
+                $insert_remarks->execute();
+            }
+
             echo '<script>
                 document.addEventListener("DOMContentLoaded", function() {
                     Swal.fire({
@@ -195,11 +211,18 @@ if (isset($_POST['inputpass'])) {
                                     <tbody>
                                         <!-- Add more rows as needed -->
                                         <?php
-                                        $i = 1;
-                                        $selectAll = $con->query("SELECT * FROM tbl_records WHERE type = 'p'");
-                                            while ($vessel = $selectAll->fetch_assoc()) :
-                                                $formattedDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y');
-                                            ?>
+                                            // Fetch distinct remarks
+                                            $remarksQuery = $con->query("SELECT DISTINCT Remarks FROM Remarks");
+                                            $remarksOptions = [];
+                                            while ($row = $remarksQuery->fetch_assoc()) {
+                                                $remarksOptions[] = $row['Remarks'];
+                                            }
+
+                                            $i = 1;
+                                            $selectAll = $con->query("SELECT * FROM tbl_records WHERE type = 'p'");
+                                            while ($vessel = $selectAll->fetch_assoc()) : 
+                                                $formattedDate = (new DateTime($vessel['ExpDateLoadline']))->format('F d, Y'); 
+                                        ?>
                                         <tr>
                                             <th scope="row"><?php echo $i++; ?></th>
                                             <td><?php echo $vessel['VesselCode']; ?></td>
@@ -218,6 +241,7 @@ if (isset($_POST['inputpass'])) {
                                             </a>
                                             </td>
                                         </tr>
+                                        <!-- Modal  -->
                                         <div class="modal fade" id="editModal-<?php echo $vessel['id']; ?>" tabindex="-1" role="dialog" aria-labelledby="editModalLabel-<?php echo $vessel['id']; ?>" aria-hidden="true">
                                             <div class="modal-dialog modal-xl" role="document">
                                             <div class="modal-content">
@@ -269,13 +293,11 @@ if (isset($_POST['inputpass'])) {
                                                                 <label for="remarks" class="control-label">Remarks</label>
                                                                 <select class="form-control form-control-sm" id="Remarks" name="Remarks" disabled>
                                                                     <option value="" disabled selected>Select Options</option>
-                                                                    <option value="Currently at Sangali" <?php echo ($vessel['Remarks'] == 'Currently at Sangali') ? 'selected' : ''; ?>>Currently at Sangali</option>
-                                                                    <option value="On Voyage" <?php echo ($vessel['Remarks'] == 'On Voyage') ? 'selected' : ''; ?>>On Voyage</option>
-                                                                    <option value="Waiting for the requirements" <?php echo ($vessel['Remarks'] == 'Waiting for the requirements') ? 'selected' : ''; ?>>Waiting for the requirements</option>
-                                                                    <option value="Annual DryDock" <?php echo ($vessel['Remarks'] == 'Annual DryDock') ? 'selected' : ''; ?>>Annual DryDock</option>
-                                                                    <option value="Last Extension" <?php echo ($vessel['Remarks'] == 'Last Extension') ? 'selected' : ''; ?>>Last Extension</option>
-                                                                    <option value="On Drydock" <?php echo ($vessel['Remarks'] == 'On Drydock') ? 'selected' : ''; ?>>On Dry dock</option>
-                                                                    <option value="No Operation" <?php echo ($vessel['Remarks'] == 'No Operation') ? 'selected' : ''; ?>>No Operation</option>
+                                                                    <?php foreach ($remarksOptions as $remark) : ?>
+                                                                        <option value="<?php echo $remark; ?>" <?php echo ($vessel['Remarks'] == $remark) ? 'selected' : ''; ?>>
+                                                                            <?php echo $remark; ?>
+                                                                        </option>
+                                                                    <?php endforeach; ?>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -292,7 +314,80 @@ if (isset($_POST['inputpass'])) {
                                             </div>
                                             </div>
                                         </div>
-                                        
+                                        <!-- End Modal  -->
+
+
+                                         <!-- Modal -->
+                                            <div class="modal fade" id="customCSVModal" tabindex="-1" role="dialog" aria-labelledby="csvModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                                                    <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="csvModalLabel">Add New Vessel</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                        <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <!-- Form content goes here -->
+                                                        <form action="PassVessTable.php" method="POST">
+                                                            <input type="hidden" name="type" value="p">
+                                                            <div class="row">
+                                                                <div class="col-md-6 border-right">
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Vessel Code</label>
+                                                                        <input type="text" name="VesselCode" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Date of DryDock</label>
+                                                                        <input type="date" name="DateDD" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Expiration Date of Loadline</label>
+                                                                        <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Estimated Date of Next DryDock</label>
+                                                                        <input type="date" name="EstDateNextDD" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Vessel Name</label>
+                                                                        <input type="text" name="Vesselname" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="" class="control-label">Date of In-Water DryDock</label>
+                                                                        <input type="date" name="DateInWaterDD" class="form-control form-control-sm" required>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label class="control-label">Place of Last DryDock</label>
+                                                                        <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" required></textarea>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <label for="remarks" class="control-label" >Remarks</label>
+                                                                        <select class="form-control form-control-sm" id="Remarks" name="Remarks" onchange="toggleRemarksInput(this)">
+                                                                            <option value="" disabled selected>Select Options</option>
+                                                                            <?php foreach ($remarksOptions as $remark) : ?>
+                                                                                <option value="<?php echo $remark; ?>" <?php echo ($vessel['Remarks'] == $remark) ? 'selected' : ''; ?>>
+                                                                                    <?php echo $remark; ?>
+                                                                                </option>
+                                                                            <?php endforeach; ?>
+                                                                            <option value="Others">Others</option>
+                                                                        </select>
+                                                                        <input type="text" class="form-control form-control-sm mt-2" id="OtherRemarks" name="OtherRemarks" placeholder="Please specify" style="display: none;">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                    </div>
+                                                    <div class="modal-footer text-right justify-content-center d-flex">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary" name="inputpass">Save changes</button>
+                                                    </div>
+                                                    </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- End Modal  -->
                                     <?php endwhile; ?>
                                     
                                     </tbody>
@@ -344,78 +439,6 @@ if (isset($_POST['inputpass'])) {
         </div>
     </div> 
 
-
-    <!-- Modal -->
-    <div class="modal fade" id="customCSVModal" tabindex="-1" role="dialog" aria-labelledby="csvModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-            <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="csvModalLabel">Add New Vessel</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Form content goes here -->
-                <form action="PassVessTable.php" method="POST">
-                    <input type="hidden" name="type" value="p">
-                    <div class="row">
-                        <div class="col-md-6 border-right">
-                            <div class="form-group">
-                                <label for="" class="control-label">Vessel Code</label>
-                                <input type="text" name="VesselCode" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="" class="control-label">Date of DryDock</label>
-                                <input type="date" name="DateDD" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="" class="control-label">Expiration Date of Loadline</label>
-                                <input type="date" name="ExpDateLoadline" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="" class="control-label">Estimated Date of Next DryDock</label>
-                                <input type="date" name="EstDateNextDD" class="form-control form-control-sm" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="" class="control-label">Vessel Name</label>
-                                <input type="text" name="Vesselname" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="" class="control-label">Date of In-Water DryDock</label>
-                                <input type="date" name="DateInWaterDD" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="form-group">
-                                <label class="control-label">Place of Last DryDock</label>
-                                <textarea name="PlaceLastDD" id="" cols="30" rows="4" class="form-control" required></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="remarks" class="control-label">Remarks</label>
-                                <select class="form-control form-control-sm" id="Remarks" name="Remarks" required>
-                                    <option value="" disabled selected>Select Options</option>
-                                    <option value="Currently at Sangali" >Currently at Sangali</option>
-                                    <option value="On Voyage" >On Voyage</option>
-                                    <option value="Waiting for the requirements">Waiting for the requirements</option>
-                                    <option value="Annual DryDock">Annual DryDock</option>
-                                    <option value="Last Extension">Last Extension</option>
-                                    <option value="On Drydock">On Dry dock</option>
-                                    <option value="No Operation">No Operation</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-            </div>
-            <div class="modal-footer text-right justify-content-center d-flex">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary" name="inputpass">Save changes</button>
-            </div>
-            </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -453,6 +476,16 @@ if (isset($_POST['inputpass'])) {
         });
     </script>
 
+<script>
+function toggleRemarksInput(selectElement) {
+    var otherRemarksInput = document.getElementById('OtherRemarks');
+    if (selectElement.value === 'Others') {
+        otherRemarksInput.style.display = 'block';
+    } else {
+        otherRemarksInput.style.display = 'none';
+    }
+}
+</script>
 </body>
 
 </html>
